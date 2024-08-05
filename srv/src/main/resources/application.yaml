@@ -1,0 +1,6 @@
+
+---
+spring:
+  config.activate.on-profile: default
+cds:
+  data-source.auto-config.enabled: false

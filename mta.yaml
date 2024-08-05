@@ -1,0 +1,133 @@
+_schema-version: "3.1"
+ID: demo_cap
+description: A simple CAP project.
+version: 1.0.0-SNAPSHOT
+modules:
+- name: demo_cap-srv
+  type: java
+  path: srv
+  properties:
+    JBP_CONFIG_COMPONENTS: 'jres: [''com.sap.xs.java.buildpack.jre.SAPMachineJRE'']'
+    JBP_CONFIG_SAP_MACHINE_JRE: '{ version: 21.+ }'
+    SPRING_PROFILES_ACTIVE: cloud,sandbox
+  requires:
+  - name: demo_cap-auth
+  - name: demo_cap-db
+  - name: app-api
+    properties:
+      CDS_MULTITENANCY_APPUI_URL: ~{url}
+  provides:
+  - name: srv-api
+    properties:
+      srv-url: ${default-url}
+  parameters:
+    buildpack: sap_java_buildpack_jakarta
+    readiness-health-check-http-endpoint: /
+    readiness-health-check-type: http
+  build-parameters:
+    build-result: target/*-exec.jar
+    builder: custom
+    commands:
+    - mvn clean package -DskipTests=true
+- name: demo_cap-db-deployer
+  type: hdb
+  path: db
+  requires:
+  - name: demo_cap-db
+  parameters:
+    buildpack: nodejs_buildpack
+  build-parameters:
+    builder: custom
+    commands:
+    - npm run build
+- name: demo_cap
+  type: approuter.nodejs
+  path: app/router
+  requires:
+  - name: srv-api
+    group: destinations
+    properties:
+      forwardAuthToken: true
+      name: srv-api
+      url: ~{srv-url}
+  - name: demo_cap-auth
+  - name: demo_cap-destination-service
+    group: destinations
+    properties:
+      forwardAuthToken: false
+      name: ui5
+      url: https://ui5.sap.com
+  provides:
+  - name: app-api
+    properties:
+      url: ${default-url}
+  parameters:
+    disk-quota: 256M
+    keep-existing-routes: true
+    memory: 256M
+- name: demo_cap-app-content
+  type: com.sap.application.content
+  path: .
+  requires:
+  - name: demo_cap-repo-host
+    parameters:
+      content-target: true
+  build-parameters:
+    build-result: resources
+    requires:
+    - artifacts:
+      - demoapp.zip
+      name: demoapp
+      target-path: resources/
+- name: demoapp
+  type: html5
+  path: demoapp
+  build-parameters:
+    build-result: dist
+    builder: custom
+    commands:
+    - npm install
+    - npm run build:cf
+    supported-platforms: []
+resources:
+- name: demo_cap-auth
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      tenant-mode: dedicated
+      xsappname: demo_cap-${org}-${space}
+    path: ./xs-security.json
+    service: xsuaa
+    service-plan: application
+- name: demo_cap-db
+  type: com.sap.xs.hdi-container
+  parameters:
+    service: hana
+    service-plan: hdi-shared
+- name: demo_cap-repo-host
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-name: demo_cap-html5-srv
+    service-plan: app-host
+- name: demo_cap-destination-service
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      HTML5Runtime_enabled: false
+      init_data:
+        instance:
+          destinations:
+          - Authentication: NoAuthentication
+            Name: ui5
+            ProxyType: Internet
+            Type: HTTP
+            URL: https://ui5.sap.com
+          existing_destinations_policy: update
+      version: 1.0.0
+    service: destination
+    service-name: demo_cap-destination-service
+    service-plan: lite
+parameters:
+  deploy_mode: html5-repo
+  enable-parallel-deployments: true
