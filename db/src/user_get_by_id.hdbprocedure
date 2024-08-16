@@ -1,0 +1,9 @@
+PROCEDURE "user_get_by_id" (IN ID BIGINT)
+LANGUAGE SQLSCRIPT
+SQL SECURITY INVOKER
+READS SQL DATA AS
+BEGIN
+    --Declare the variables
+   -- DECLARE GETID BIGINT = :"id";
+    SELECT * FROM "user" WHERE "id" = ID;
+END;
