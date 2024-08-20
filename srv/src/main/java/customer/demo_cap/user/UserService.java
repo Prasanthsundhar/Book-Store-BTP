@@ -18,7 +18,7 @@ public class UserService {
     UserDAO userDAO;
 
     public Optional<User> findUserById(Long id) {
-        return  userDAO.findById(id);
+        return  userDAO.getUserById(id);
        // return user;
     }
 

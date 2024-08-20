@@ -7,7 +7,11 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Column;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 @Entity
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Table(name = "user") // Ensure this matches the actual table name in your database
@@ -38,22 +42,22 @@ public class User {
         this.userRoleId = userRoleId;
     }
 
-    // Getters
-    public Long getId() {
-        return id;
-    }
+    // // Getters
+    // public Long getId() {
+    //     return id;
+    // }
 
-    public String getUserName() {  // Ensure consistent naming with the field
-        return userName;
-    }
+    // public String getUserName() {  // Ensure consistent naming with the field
+    //     return userName;
+    // }
 
-    public String getEmail() {
-        return email;
-    }
+    // public String getEmail() {
+    //     return email;
+    // }
 
-    public Long getUserRoleId() {
-        return userRoleId;
-    }
+    // public Long getUserRoleId() {
+    //     return userRoleId;
+    // }
 
     // Setters can be added if needed
 }
